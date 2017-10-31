@@ -1,0 +1,22 @@
+{
+  "name": "promise-allprops",
+  "version": "0.1.0",
+  "description": "Like Promise.all but works on objects",
+  "main": "index.js",
+  "author": "Joshua Erickson <josh@snoj.us>",
+  "license": "MIT",
+  "repository" : {
+     "type" : "git"
+    , "url" : "https://github.com/snoj/promise-allprops.git"
+  },
+  "files": [
+    "index.js",
+    "test/"
+  ],
+  "dependencies": {
+    "lodash-flatkeystree": "^1.0.0"
+  },
+  "devDependencies": {
+    "mocha": "^4.0.1"
+  }
+}
