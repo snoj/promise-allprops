@@ -1,54 +1,63 @@
-var _ = require('lodash');
-_.mixin(require('lodash-flatkeystree'));
+(function(self, factory) {
+  if(typeof process != 'undefined' && typeof process.pid != 'undefined' && typeof require == 'function') {
+    var ld = require('lodash');
+    ld.mixin(require('lodash-flatkeystree'));
+    module.exports = factory(ld);
+  } else if(typeof window != 'undefined' && typeof _ != 'lodash') {
+    //Promise.props = function() {};
+    Promise.props = factory(_);
+  }
+})(this, function(_) {
+  return function(o) {
+    return new Promise(function(resolve, reject) {
+      var allkeys = _.keysDeep(o);
+      var promiseKeys = _.filter(allkeys, function(k) {
+        return _.get(o, k) instanceof Promise;
+      });
+      var promiseValues = _.map(promiseKeys, function(k) {
+        return _.get(o, k);
+      });
 
-module.exports = function(o) {
-  return new Promise(function(resolve, reject) {
-    var allkeys = _.keysDeep(o);
-    var promiseKeys = _.filter(allkeys, function(k) {
-      return _.get(o, k) instanceof Promise;
-    });
-    var promiseValues = _.map(promiseKeys, function(k) {
-      return _.get(o, k);
-    });
+      //clone o tree
+      var o2 = {};
+      _.each(allkeys, function(k) {
+        var v = _.get(o, k);
 
-    //clone o tree
-    var o2 = {};
-    _.each(allkeys, function(k) {
-      var v = _.get(o, k);
+        var t = v;
 
-      var t = v;
-
-      if(/\.\d+\.*/.test(k)) {
-        _.reduce(k.split("."), function(result, value, key) {
-          if(result != '') {
-            var i = _.get(o, result);
-            if(i instanceof Promise) {
-              //nothing
-            } else if(Array.isArray(i)) {
-              _.set(o2, result, []);
-            } else if(typeof i == 'object') {
-              _.set(o2, result, {});
+        if(/\.\d+\.*/.test(k)) {
+          _.reduce(k.split("."), function(result, value, key) {
+            if(result != '') {
+              var i = _.get(o, result);
+              if(i instanceof Promise) {
+                //nothing
+              } else if(Array.isArray(i)) {
+                _.set(o2, result, []);
+              } else if(typeof i == 'object') {
+                _.set(o2, result, {});
+              }
             }
-          }
-          return ((result != "") ? result + '.' : '') + value;
+            return ((result != "") ? result + '.' : '') + value;
 
-        }, '');
-      }
+          }, '');
+        }
 
 
-      if(v instanceof Promise)
-        t = null
+        if(v instanceof Promise)
+          t = null
 
-      _.set(o2, k, t);
-    });
+        _.set(o2, k, t);
+      });
 
-    Promise.all(promiseValues).catch(reject).then(function(results) {
-      _.each(results, function(v, k) {
-        var l = promiseKeys[k];
+      Promise.all(promiseValues).catch(reject).then(function(results) {
+        _.each(results, function(v, k) {
+          var l = promiseKeys[k];
 
-        _.set(o2, l, v);
-        resolve(o2);
+          _.set(o2, l, v);
+          resolve(o2);
+        });
       });
     });
-  });
-};
+  };
+  console.log(module.exports);
+});
